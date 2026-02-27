@@ -85,7 +85,7 @@ cd /path/to/repo
 ### 2. Add a rule interactively from a real remote URL
 
 ```bash
-mgit rule add git@github.com:pavelBuzdanov/AI_MUSIC_6759607416
+mgit rule add git@github.com:pavelBuzdanov/sunset-echo-4827
 ```
 
 What happens:
