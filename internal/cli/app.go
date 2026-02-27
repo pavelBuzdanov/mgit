@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
@@ -631,7 +632,7 @@ func (a *App) handleSSHTest(ctx context.Context, opts globalOptions, args []stri
 		a.printErr(errors.New("SSH test is only applicable for SSH remotes"))
 		return 1
 	}
-	sshArgs := []string{"-i", res.KeyPath, "-o", "IdentitiesOnly=yes", "-o", "BatchMode=yes", "-T", res.Parsed.TargetUserHost()}
+	sshArgs := []string{"-F", "/dev/null", "-i", res.KeyPath, "-o", "IdentitiesOnly=yes", "-o", "BatchMode=yes", "-T", res.Parsed.TargetUserHost()}
 	if opts.DryRun || *localDryRun {
 		if opts.JSON {
 			_ = ui.PrintJSON(a.stdout, map[string]any{
@@ -645,10 +646,19 @@ func (a *App) handleSSHTest(ctx context.Context, opts globalOptions, args []stri
 		return 0
 	}
 	if err := a.newShell(opts).Run(ctx, "ssh", sshArgs, nil); err != nil {
+		// For GitHub, "ssh -T git@github.com" returns exit code 1 even after successful auth.
+		if strings.EqualFold(res.Parsed.Host, "github.com") && hasExitCode(err, 1) {
+			return 0
+		}
 		a.printErr(err)
 		return 1
 	}
 	return 0
+}
+
+func hasExitCode(err error, code int) bool {
+	var exitErr *exec.ExitError
+	return errors.As(err, &exitErr) && exitErr.ExitCode() == code
 }
 
 func (a *App) loadConfig(opts globalOptions) (*config.Config, string, error) {

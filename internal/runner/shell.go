@@ -94,7 +94,8 @@ func sortedEnvDebug(extra map[string]string) string {
 
 func BuildGITSSHCommand(keyPath string) string {
 	// GIT_SSH_COMMAND is interpreted by a shell, so single-quote escaping is required.
-	return "ssh -i " + shellQuote(keyPath) + " -o IdentitiesOnly=yes"
+	// Use -F /dev/null to ignore user-level ~/.ssh/config overrides (Host github.com, IdentityFile, etc.).
+	return "ssh -F /dev/null -i " + shellQuote(keyPath) + " -o IdentitiesOnly=yes"
 }
 
 func shellQuote(s string) string {
